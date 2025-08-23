@@ -1,6 +1,24 @@
 import axios from "axios";
 
 
+// set for axios to setup authorization header
+axios.interceptors.request.use((config) => {
+    const skipUrls = ['/login', "/register"]
+    const shoudSkip = skipUrls.some(url => config.url?.includes(url))
+    if(!shoudSkip){
+        const token = gettoken()
+        if(token) {
+            config.headers.Authorization = token
+        }
+    }
+    return config
+},
+(error) => {
+    console.log("setting header authorization error: ", error)
+    return Promise.reject(error)
+}
+)
+
 function login(username: string,pwd :string, host :string,port :string) {
     const formdata = new FormData()
     formdata.append("username", username)
@@ -14,6 +32,21 @@ function login(username: string,pwd :string, host :string,port :string) {
     } )
 }
 
+function allRecords() {
+    return axios.get("/ldap/all")
+}
+
+
+function getDnInfo(dn:string) {
+
+    return axios.get("/ldap/dn?dn="+dn)
+}
+
+function getAllSchemas() {
+    return axios.get("/schema")
+}
+
+
 const tokenkey = "token"
 function storetoken(token: string) {
     localStorage.setItem(tokenkey, token)
@@ -24,4 +57,4 @@ function gettoken() {
 }
 
 
-export {login,storetoken,gettoken}
+export {login,storetoken,gettoken,allRecords,getDnInfo,getAllSchemas}
