@@ -10,3 +10,7 @@ export type NodeData = {
     children?: NodeData[]
 }
 
+export type DNType = {
+        DN: string,
+        Attributes: Array<{Name:string, Values:string}>
+}

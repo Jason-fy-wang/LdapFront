@@ -3,18 +3,15 @@ import  {Layout, Tree,Card,Collapse,Divider,Form,Input} from 'antd'
 import type { TreeDataNode,TreeProps} from "antd"
 import { DownOutlined } from "@ant-design/icons"
 import {allRecords} from './api/apis'
-import { useNavigate } from "react-router"
+import { Outlet, useNavigate } from "react-router"
 import { AxiosError } from "axios"
 import {buildRecordToMap,convertMapToTreeNode,getFullDN} from './api/utils'
 import {getDnInfo,getAllSchemas} from './api/apis'
-
+import type {DNType} from '../types/index'
 
 function RecordInfo () {
-    type DNType = {
-        DN: string,
-        Attributes: Array<Object>
-    }
     const {Content, Sider} = Layout
+
     const [records, setRecords] = useState([])
     const [recordTree, setRecordTree] = useState<TreeDataNode[] | []>([])
     const [dnInfo, setDnInfo] = useState<DNType>()
@@ -26,7 +23,7 @@ function RecordInfo () {
             const data = res.data
             //console.log("get data: ", data)
             setRecords(data)
-            console.log("records", records)
+            //console.log("records", records)
         }catch(err) {
             setRecords([])
             if (err instanceof AxiosError) {
@@ -52,7 +49,7 @@ function RecordInfo () {
     const retrieveSchemas = async() => {
         try {
             const schema = await getAllSchemas()
-            console.log(schema)
+            //console.log(schema)
             setSchema(schema)
         }catch(error) {
             console.log("get schema error: ", error)
@@ -69,27 +66,22 @@ function RecordInfo () {
         if (records.length>0){
             const maps = buildRecordToMap(records)
             const data = convertMapToTreeNode(maps)
-            console.log("tree data: ", data)
+            //console.log("tree data: ", data)
             setRecordTree(data)
         }
     },[records])
 
-    // when dn info change, then update the corresponding content info
-    useEffect(() => {
-        
-    }, [dnInfo])
-
     const onSelect:TreeProps['onSelect'] = async (selectKeys, info) => {
-        //console.log("select", selectKeys, info)
         const fulldn = getFullDN(recordTree, selectKeys[0].toString())
-        console.log("full dn: ", fulldn, ", keys: ", selectKeys, selectKeys[0].toString())
+        //console.log("full dn: ", fulldn, ", keys: ", selectKeys, selectKeys[0].toString())
 
         try {
             const dnresp = await getDnInfo(fulldn)
             const data = dnresp.data[0]
-            console.log("dninfo: ", data)
+            //console.log("dninfo: ", data)
             setDnInfo(data)
-            console.log("dn state:", dnInfo)
+            //console.log("dn state:", dnInfo)
+            navigate("display", {state: dnInfo})
         }catch (error) {
             console.log("dn info error:", error)
         }
@@ -103,6 +95,7 @@ function RecordInfo () {
         display: "flex",
         justifyContent: "center",
     }
+
 
     return (
 
@@ -118,34 +111,7 @@ function RecordInfo () {
                     />
             </Sider>
             <Content style={contentStyle}>
-                <Card title="DN info" style={{width:"60%", height: "60%",marginTop:"3%"}}>
-                    <Form
-                    name="basic"
-                    labelCol={{span: 8}}
-                    wrapperCol={{span: 16}}
-                    style={{maxWidth: "80%"}}
-                    autoComplete="off"
-                    >
-                        <Form.Item
-                                label="DN"
-                                name="DN"
-                            >
-                                <Input value={dnInfo?.DN} />
-                        </Form.Item>
-                        {
-                            dnInfo?.Attributes.map(attr => (
-                                <Form.Item
-                                label={attr["Name"]}
-                                name={attr["Name"]}
-                                key={attr["Name"]}
-                            >
-                                <Input value={attr.Values} />
-                            </Form.Item>
-                            ))
-
-                        }
-                    </Form>
-                </Card>
+                <Outlet/>
             </Content>
         </Layout>
         </>
