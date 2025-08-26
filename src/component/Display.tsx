@@ -1,10 +1,13 @@
-import {Card, Form,Input} from 'antd'
-import { useLocation } from 'react-router'
+import {Card, Form,Input,Button,Flex,message, Popconfirm } from 'antd'
+import {useLocation, useNavigate } from 'react-router'
 import type {DNType} from '../types/index'
+import type { PopconfirmProps } from 'antd'
 import {useEffect} from 'react'
 
 function Display () {
     
+    const navigate = useNavigate()
+    const [messageApi, contextHolder] = message.useMessage()
     const [form] = Form.useForm()
     const location = useLocation()
     const dnInfo:DNType = location.state
@@ -26,10 +29,24 @@ function Display () {
         updateFormValues()
     }, [dnInfo])
 
+    
+    const jumpToAdd = () => {
+        navigate("../add", {replace: true})
+    }
 
+    const confirm:PopconfirmProps['onConfirm'] = (e) => {
+        console.log(e)
+        messageApi.success("delete record")
+    }
+
+    const cancel:PopconfirmProps['onCancel'] = (e) => {
+        console.log(e)
+        messageApi.info("cancel delete")
+    }
 
     return  (
         <>
+        {contextHolder}
         <Card title="DN info" style={{width:"60%", height: "fit-content",marginTop:"1%"}}>
                     <Form
                     name="basic"
@@ -45,7 +62,7 @@ function Display () {
                                 label="DN"
                                 name="DN"
                             >
-                                <Input value={dnInfo?.DN} />
+                                <Input/>
                         </Form.Item>
                         {
                             dnInfo?.Attributes.map(attr => (
@@ -59,7 +76,21 @@ function Display () {
                             ))
 
                         }
+                       
                     </Form>
+                    <Flex style={{width:'100%'}} gap='small' justify='center'>
+                        <Button type='primary' onClick={jumpToAdd}>Add</Button>
+                        <Popconfirm 
+                        title="delete the DN"
+                        description="Are you sure to delete this record?"
+                        okText="Yes"
+                        cancelText="No"
+                        onCancel={cancel}
+                        onConfirm={confirm}
+                        >
+                        <Button type='primary' danger >Delete</Button>
+                        </Popconfirm>
+                    </Flex>
                 </Card>        
         </>
     )

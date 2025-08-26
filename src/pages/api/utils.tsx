@@ -1,5 +1,5 @@
 import type { TreeDataNode } from "antd"
-import type {RecordArray, NodeData} from '../../types/index'
+import type {RecordArray, NodeData, SchemaData, Schema} from '../../types/index'
 
 
 const buildRecordToMap = (recordsArray: Array<RecordArray>) => {
@@ -69,5 +69,75 @@ const getFullDN = (data:TreeDataNode[], dn: string) :string => {
    return path.reverse().join(",")
 }
 
+// "STRUCTURAL" | "AUXILIARY" | "ABSTRACT";
+const getStructuralKey = (data :SchemaData) : string[] => {
+    const vals:string[] = []
+    for (const [key, schema] of Object.entries(data.schemas)) {
 
-export {buildRecordToMap,convertMapToTreeNode,getFullDN}
+        if (schema.type === "STRUCTURAL" && schema.must !== null){
+            vals.push(key)
+        }
+        //console.log("key: ", key, ", value: ", schema)
+    }
+
+    return vals
+}
+
+const getAuxiliary = (data:SchemaData) :string[] => {
+        const vals:string[] = []
+    for (const [key, schema] of Object.entries(data.schemas)) {
+
+        if (schema.type === "AUXILIARY"){
+            vals.push(key)
+        }
+    }
+
+    return vals
+}
+
+const getAbstruct = (data: SchemaData) :string[] => {
+    const vals:string[] = []
+    for (const [key, schema] of Object.entries(data.schemas)) {
+
+        if (schema.type === "ABSTRACT"){
+            vals.push(key)
+        }
+    }
+    return vals
+}
+
+
+const getObjectAttributes = (data:SchemaData, obj: string)  => {
+    const val = data.schemas[obj]
+    if (val.must === null) {
+        val.must = []
+    }
+    if (val.may === null){
+        val.may = []
+    }
+    
+    let parent = val.parent
+
+    while(parent !== "" && parent !== null){
+        const tmp = data.schemas[parent].must
+        if (tmp !== null) {
+            val.must.push(...tmp)
+        }
+        const tm = data.schemas[parent].may
+        if (tm !== null) {
+            val.may.push(...tm)
+        }
+        parent = data.schemas[parent].parent
+    }
+    val.must = removeDuplicateItem(val.must)
+    val.may = removeDuplicateItem(val.may)
+    return val
+}
+
+const removeDuplicateItem = (data: string[]) => {
+    return [...new Set(data)]
+}
+
+
+
+export {buildRecordToMap,convertMapToTreeNode,getFullDN,getStructuralKey,getAuxiliary,getAbstruct,getObjectAttributes,removeDuplicateItem}
