@@ -37,15 +37,15 @@ describe('utils test', ()=>{
 
         expect(tree[0]!.children![0]!.title).exist
         expect(tree[0]!.children![0]!.key).exist
-        expect(tree[0]!.children[0]!.children).exist
-        expect(tree[0]!.children[0]!.children[0].key).exist
+        expect(tree?.[0]?.children?.[0]?.children).toBeDefined()
+        expect(tree?.[0]?.children?.[0]?.children?.[0]?.key).toBeDefined()
 
     })
     
     it("test full dn build", () => {
         const data = buildRecordToMap(dns)
         const tree = convertMapToTreeNode(data)
-        printData(tree)
+        //printData(tree)
         const dn = getFullDN(tree, "ou=person")
         expect(dn).toEqual("ou=person,dc=example,dc=com")
         const dn2 = getFullDN(tree, "cn=john")
