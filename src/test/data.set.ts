@@ -1,3 +1,4 @@
+import type { TreeDataNode } from "antd";
 import type { SchemaData } from "../types";
 
 export const data:SchemaData = {
@@ -1627,3 +1628,46 @@ export const data:SchemaData = {
 		}
 	}
 }
+
+export const treeNode:TreeDataNode[] = [
+	{
+		key:"dc=com",
+		title:"cd=com",
+		children: [
+			{
+				key:"dc=example",
+				title:"dc=example",
+				children: [
+					{
+						key:"ou=group",
+						title:"ou=group",
+						children:[
+							
+						]
+					},
+					{
+						key:"ou=person",
+						title:"ou=person",
+						children: [
+							{
+								key:"uid=john",
+								title:"uid=john",
+								children:[]
+							},
+							{
+								key:"cn=mike",
+								title:"cn=mike",
+								children:[]
+							}
+						]
+					},
+					{
+						key:"ou=HR",
+						title:"out=HR",
+						children:[]
+					}
+				]
+			}
+		]
+	}
+]

@@ -34,9 +34,11 @@ const convertMapToTreeNode = (data: Map<string,any>) => {
             key: entry[1].key,
             isLeaf: false
         }
-        if (entry[1].children) {
+        if (entry[1].children && entry[1].children.size > 0) {
             obj.isLeaf = false
             obj.children = convertMapToTreeNode(entry[1].children)
+        }else{
+            obj.isLeaf = true
         }
         tree.push(obj)
     }
@@ -44,6 +46,21 @@ const convertMapToTreeNode = (data: Map<string,any>) => {
     return tree
 }
 
+// check if key is leaf node or not
+const checkLeafNode = (key:string, tree: TreeDataNode[]):boolean|undefined => {
+    for(const entry of tree) {
+        if (entry.key === key) {
+            if (entry.children && entry.children.length > 0){
+                return false
+            }else{
+                return true
+            }
+        }
+        if (entry.children && entry.children.length > 0) {
+            return checkLeafNode(key, entry.children)
+        }
+    }
+}
 
 const getFullDN = (data:TreeDataNode[], dn: string) :string => {
     let path: string[] 
@@ -140,4 +157,4 @@ const removeDuplicateItem = (data: string[]) => {
 
 
 
-export {buildRecordToMap,convertMapToTreeNode,getFullDN,getStructuralKey,getAuxiliary,getAbstruct,getObjectAttributes,removeDuplicateItem}
+export {buildRecordToMap,convertMapToTreeNode,getFullDN,getStructuralKey,getAuxiliary,getAbstruct,getObjectAttributes,removeDuplicateItem,checkLeafNode}

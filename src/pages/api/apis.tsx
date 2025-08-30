@@ -46,6 +46,19 @@ function getAllSchemas() {
     return axios.get("/schema")
 }
 
+function addRecord(recInfo:string) {
+    return axios.post("/ldap/add", recInfo, {
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+}
+
+function delRecord(dn:string) {
+    const encoded = encodeURIComponent(dn)
+    return axios.delete("/ldap/del?dn="+encoded)
+}
+
 
 const tokenkey = "token"
 function storetoken(token: string) {
@@ -57,4 +70,4 @@ function gettoken() {
 }
 
 
-export {login,storetoken,gettoken,allRecords,getDnInfo,getAllSchemas}
+export {login,storetoken,gettoken,allRecords,getDnInfo,getAllSchemas,addRecord,delRecord}

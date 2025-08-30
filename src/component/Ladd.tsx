@@ -1,15 +1,22 @@
-import { Card,Form,Input,Button, Select,Collapse, type CollapseProps, Row, Col } from "antd"
+import { Card,Form,Input,Button, Select,Collapse, type CollapseProps, Row, Col,type FormProps, message } from "antd"
 import { useState, useEffect,useRef } from "react"
-import {getAllSchemas} from '../pages/api/apis'
+import {getAllSchemas, addRecord} from '../pages/api/apis'
 import { getStructuralKey,getAuxiliary,getObjectAttributes } from "../pages/api/utils.tsx"
 import type { Schema } from "../types/index.ts"
 import {PlusOutlined} from '@ant-design/icons'
+import { useLocation } from "react-router"
+import { useDataContext } from "../pages/RecordInfo.tsx"
+
 
 function Ladd() {
     const [form] = Form.useForm()
     const {Option} = Select;
+    const location = useLocation()
+    const param = location.state
+    const {refreshData} = useDataContext()
 
-    const [dnInfo, setDnInfo] = useState()
+    const [messageApi, contextHolder] = message.useMessage()
+    const [prefix, setPrefix] = useState()
     const [schema, setSchema] = useState({schemas: {}})
     const [struct, setStruct] = useState<string[]>()
     const [auxiliaryKey, setAuxiliaryKey] = useState<string[]>([])
@@ -53,6 +60,14 @@ function Ladd() {
     useEffect(()=>{
         //setInterval(retrieveSchemas, 1000*60)
         retrieveSchemas()
+        
+        console.log("parame for add:  ", param)
+        if(param) {
+            const data = param.DN.split(",").reverse().join(",")
+            console.log("parame for add:  ", param,", prefix: ", data)
+            setPrefix(data)
+        }
+        
     }, [])
 
     useEffect(() => {
@@ -74,7 +89,6 @@ function Ladd() {
     const onAuxiliarySelect = (key:string, value: string) => {
         //console.log("select auxiliary key :",key, ", value is: ", value)
         selectedAuxiliary.current.set(key, value)
-        
         triggerRender()
     }
 
@@ -84,10 +98,11 @@ function Ladd() {
         }
         
         const vals = Array.from(selectedAuxiliary.current.keys()).map((key,idx) => (
-            <>
+            <div key={key}>
             <Form.Item
                 label="ObjectClass(Auxiliary)"
                 name={key}
+                key={key}
             >
                 <Select
                 placeholder="select objectClass for record"
@@ -107,7 +122,7 @@ function Ladd() {
                     style={{width:"100%",marginTop: "2px"}}></Collapse>
                 </Col>
             </Row>
-            </>
+            </div>
         ))
         
         return vals
@@ -120,6 +135,45 @@ function Ladd() {
         triggerRender()
     }
 
+    const formOnFinish:FormProps["onFinish"] = async (values) => {
+        console.log("form onFinish values: ", values)
+        if (values.DN === undefined || values.DN==="") {
+            messageApi.warning("please input valid DN")
+            return 
+        }
+        let dn = prefix + "," + values.DN
+        dn = dn.split(",").reverse().join(",")
+        delete values["DN"]
+        const obj:any = {}
+        const obclass:string[] = []
+        Object.entries(values).forEach(val => {
+            if(val[0].toLocaleLowerCase().startsWith("objectclass")) {
+                obclass.push(val[1] as string)
+                return
+            }else if (val[1] !== undefined) {
+                obj[val[0]] = val[1]
+            }
+        })
+        obj["objectClass"] = obclass.join(",")
+        obj["DN"] = dn
+        console.log("obj === ", obj)
+
+        try {
+            const data = await addRecord(JSON.stringify(obj))
+            if(data.status === 200 || data.status === 201 ){
+                messageApi.success("record add success")
+                refreshData()
+            }
+        }catch (err) {
+            console.log("add record error: ", err)
+            messageApi.error("add record fail")
+        }
+    }
+
+    const formOnFinishFail:FormProps["onFinishFailed"] = (errInfo) => {
+        console.log("on finish error: ", errInfo)
+    }
+
     const renderAttributeInputs = (objclass: string|undefined) => {
         if (objclass === "" || objclass === undefined) {
             return
@@ -127,7 +181,7 @@ function Ladd() {
         let attrs: string[] = getObjectAttributes(schema, objclass).must || []
         const child = attrs.map((attr, idx) => (
             <Form.Item
-                key={idx}
+                key={attr}
                 label={attr}
                 name={attr}
                 style={{marginBottom: 12}}
@@ -139,7 +193,7 @@ function Ladd() {
         let mayattrs: string[] = getObjectAttributes(schema, objclass).may || []
         const maychild = mayattrs.map((attr, idx) => (
             <Form.Item
-                key={idx}
+                key={attr}
                 label={attr}
                 name={attr}
                 style={{marginBottom: 12}}
@@ -167,6 +221,7 @@ function Ladd() {
 
     return (
         <>
+        {contextHolder}
             <Card title="DN info" style={{width:"60%", height: "fit-content",marginTop:"1%"}}>
                     <Form
                     name="basic"
@@ -175,14 +230,16 @@ function Ladd() {
                     wrapperCol={{span: 16}}
                     style={{maxWidth: "80%"}}
                     autoComplete="off"
-                    initialValues={dnInfo}
+                    onFinish={formOnFinish}
+                    onFinishFailed={formOnFinishFail}
+                    //initialValues={dnInfo}
                     >
                     <div style={{width: "100%"}}>
                         <Form.Item
                                 label="DN"
                                 name="DN"
                             >
-                                <Input/>
+                                <Input addonBefore={prefix}/>
                         </Form.Item>
                         <Form.Item
                                 label="ObjectClass(structural)"

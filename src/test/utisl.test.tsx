@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {buildRecordToMap,convertMapToTreeNode,getFullDN,getStructuralKey,getAuxiliary,getAbstruct,getObjectAttributes,removeDuplicateItem} from '../pages/api/utils'
+import {buildRecordToMap,convertMapToTreeNode,getFullDN,getStructuralKey,getAuxiliary,getAbstruct,getObjectAttributes,removeDuplicateItem,checkLeafNode} from '../pages/api/utils'
+import {treeNode} from "./data.set.ts"
 
 describe('utils test', ()=>{
     const dns = [{
@@ -131,6 +132,23 @@ describe("dn parse test", ()=> {
         vals = removeDuplicateItem(vals)
 
         expect(vals).toEqual(expect.arrayContaining(["1","2","3"]))
+    })
+
+    it("test check leaf node", ()=> {
+        let val = checkLeafNode("dc=com", treeNode)
+        expect(val).toBeFalsy()
+
+        val = checkLeafNode("dc=example", treeNode)
+        expect(val).toBeFalsy()
+
+        val = checkLeafNode("cn=mike", treeNode)
+        expect(val).toBeTruthy()
+
+        val = checkLeafNode("cn=john", treeNode)
+        expect(val).toBeUndefined()
+
+        val = checkLeafNode("uid=john", treeNode)
+        expect(val).toBeTruthy()
     })
 })
 
